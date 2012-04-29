@@ -21,4 +21,5 @@ PagedCollection expects server responses to be of the following format:
   per_page: [per_page],
   page: [current_page],
   items: [array_of_items]
-}```
+}
+```
