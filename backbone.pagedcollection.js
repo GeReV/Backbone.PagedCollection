@@ -7,6 +7,14 @@
 
 (function (Backbone) {
   var PagedCollection = Backbone.PagedCollection = function(models, options) {  
+    var _reset = this.reset;
+    
+    this._reset = function() {
+      _reset.call(this);
+      
+      this.pages = {};
+    };
+    
     options || (options = {});
     
     if (options.model) this.model = options.model;
@@ -15,8 +23,7 @@
     this._reset();
     
     this.perPage = options.perPage || 10;
-    this.total = models.length;
-    this.pages = {};
+    this.total = options.total || models.length;
     
     this.collection = options.collection || Backbone.Collection;
     
@@ -64,6 +71,10 @@
         options.parse = this.parse;
         options.url = this.url() + '/page/' + this.page;
         
+        if (this.filter) {
+          options.data = this.filter;
+        }
+        
         collection.fetch(options);
       }else{
         //Backbone.Collection.prototype.reset.call(this, this.pages[ this.page ].collection.toArray() );
@@ -76,8 +87,9 @@
     reset: function(models, options) {
       var timestamp = (new Date).getTime(), i, pageCount = Math.max(1, Math.ceil(this.total / this.perPage));
         
-      this.total = models.length;    
-      this.pages = {};    
+      this.total = options.total || models.length;    
+      
+      this._reset();
       
       if (this.total) {
         // Initialize the collection into pages if provided immediately.
@@ -149,6 +161,15 @@
     previousPage: function() {
       this.page = this.page - 1;
       
+      this.fetch();
+    },
+    
+    filter: function(filter) {
+      this._reset();
+      
+      this.filter = filter;
+      
+      this.page = 1;
       this.fetch();
     }
   
