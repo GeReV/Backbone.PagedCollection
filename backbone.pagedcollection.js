@@ -166,7 +166,7 @@
       this.fetch();
     },
     
-    filter: function(filter) {
+    setFilter: function(filter) {
       this._reset();
       
       this.filter = filter;
