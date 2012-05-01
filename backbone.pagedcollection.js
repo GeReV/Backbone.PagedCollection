@@ -71,8 +71,8 @@
         options.parse = this.parse;
         options.url = this.url() + '/page/' + this.page;
         
-        if (this.filter) {
-          options.data = this.filter;
+        if (this.dataFilter) {
+          options.data = this.dataFilter;
         }
         
         collection.fetch(options);
@@ -169,7 +169,7 @@
     setFilter: function(filter) {
       this._reset();
       
-      this.filter = filter;
+      this.dataFilter = filter;
       
       this.page = 1;
       this.fetch();
