@@ -7,7 +7,7 @@
 
 (function (Backbone) {
   var PagedCollection = Backbone.PagedCollection = function(models, options) {  
-    var _reset = this.reset;
+    var _reset = this._reset;
     
     this._reset = function() {
       _reset.call(this);
