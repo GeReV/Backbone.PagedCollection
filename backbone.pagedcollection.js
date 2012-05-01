@@ -38,11 +38,11 @@
       var collection, 
           self = this, 
           success = options.success;
-          
-        this.trigger("fetching");
       
       if (!this.pages[ this.page ]
           /*|| this.pages[ this.page ].timestamp < blabla // Something with the cache timestamp? */) {
+            
+        this.trigger("fetching");
             
         collection = new this.collection();
         collection.url = this.url;
@@ -70,8 +70,6 @@
         this.trigger("reset");
         
         success && success(self);
-        
-        this.trigger("fetched");
       }
     },
     
