@@ -86,6 +86,8 @@
     
     reset: function(models, options) {
       var timestamp = (new Date).getTime(), i, pageCount = Math.max(1, Math.ceil(this.total / this.perPage));
+      
+      options || (options = {});
         
       this.total = options.total || models.length;    
       
@@ -177,9 +179,9 @@
   
   var methods = ['forEach', 'each', 'map', 'reduce', 'reduceRight', 'find',
       'detect', 'filter', 'select', 'reject', 'every', 'all', 'some', 'any',
-      /*'include', 'contains', 'invoke', 'max', 'min', 'sortBy', 'sortedIndex',
-      'toArray', 'size',*/ 'first', 'initial', 'rest', 'last', /*'without',*/ 'indexOf',
-      'shuffle', /*'lastIndexOf',*/ 'isEmpty', 'groupBy'];
+      /*'include', 'contains', 'invoke', 'max', 'min', 'sortBy', 'sortedIndex',*/
+      'toArray', 'size', 'first', 'initial', 'rest', 'last', /*'without',*/ 'indexOf',
+      'shuffle', 'lastIndexOf', 'isEmpty', 'groupBy'];
   
   _.each(methods, function(method) {
     PagedCollection.prototype[method] = function() {
