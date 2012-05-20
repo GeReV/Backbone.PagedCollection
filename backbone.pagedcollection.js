@@ -1,4 +1,4 @@
-// Backbone.PagedCollection.js 0.1
+// Backbone.PagedCollection.js 0.1.2
 
 // (c) 2012 Amir Grozki
 // Distributed under the MIT license.
@@ -6,6 +6,7 @@
 // Based on https://gist.github.com/705733
 
 (function (Backbone) {
+
   var PagedCollection = Backbone.PagedCollection = function(models, options) {  
     var _reset = this._reset;
     
@@ -15,6 +16,7 @@
       this.pages = {};
     };
     
+
     options || (options = {});
     
     if (options.model) this.model = options.model;
@@ -23,18 +25,23 @@
     this._reset();
     
     this.perPage = options.perPage || 10;
-    this.total = options.total || models.length;
+    this.total = options.total;
     
     this.collection = options.collection || Backbone.Collection;
     
+    this.url = this.collection.prototype.model.prototype.urlRoot;
+    
     this.initialize.apply(this, arguments);
     
-    if (models) this.reset(models, {silent: true, parse: options.parse});
+    if (models) {
+      this.reset(models, { silent: true, parse: options.parse, total: this.total });
+      this.total = options.total || models.length
+    }
   };
   
   _.extend(PagedCollection.prototype, Backbone.Collection.prototype, {
-    initialize: function() {
-      _.bindAll(this, 'parse', 'url', 'pageInfo', 'nextPage', 'previousPage');
+    initialize: function() {      
+      _.bindAll(this, 'parse', 'pageInfo', 'nextPage', 'previousPage');
       
       this.page = 1;
     },
@@ -47,6 +54,7 @@
           success = options.success;
       
       if (!this.pages[ this.page ]
+          || options.force // Allow a forced fetch for manual update.
           /*|| this.pages[ this.page ].timestamp < blabla // Something with the cache timestamp? */) {
             
         this.trigger("fetching");
@@ -54,7 +62,7 @@
         collection = new this.collection();
         collection.url = this.url;
         collection.parse = this.parse;
-        
+        this.pages[ this.page ] = { timestamp: (new Date).getTime(), collection: collection }; // added this line cause if u use any of eech etc methods pages[this.page] wont be defined yet
         options.success = _.bind(function(resp) {
           
           this.pages[ this.page ] = { timestamp: (new Date).getTime(), collection: collection };
@@ -70,6 +78,7 @@
         
         options.parse = this.parse;
         options.url = this.url() + '/page/' + this.page;
+        //options.data = filters;
         
         if (this.dataFilter) {
           options.data = this.dataFilter;
@@ -77,7 +86,7 @@
         
         collection.fetch(options);
       }else{
-        //Backbone.Collection.prototype.reset.call(this, this.pages[ this.page ].collection.toArray() );
+       //Backbone.Collection.prototype.reset.call(this, this.pages[ this.page ].collection.toArray() );
         this.trigger("reset");
         
         success && success(self);
@@ -90,10 +99,10 @@
       options || (options = {});
         
       this.total = options.total || models.length;    
-      
+
       this._reset();
       
-      if (this.total) {
+      if (this.total) {// this should be in the constructor
         // Initialize the collection into pages if provided immediately.
         for(i = 1; i <= pageCount; ++i) {
           this.pages[i] = { timestamp: timestamp, collection: new this.collection(_.first(models, this.perPage), options) };
@@ -118,10 +127,6 @@
       this.total = resp.total;
       
       return resp.items;
-    },
-    
-    url: function() {
-      return this.urlRoot;
     },
     
     pageInfo: function() {
@@ -166,13 +171,15 @@
       this.fetch();
     },
     
-    setFilter: function(filter) {
+    setFilter: function(filter, options) {
+      options || (options = {});
+      
       this._reset();
       
       this.dataFilter = filter;
       
       this.page = 1;
-      this.fetch();
+      this.fetch(options);
     }
   
   });
