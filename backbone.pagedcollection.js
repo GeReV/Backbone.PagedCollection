@@ -1,4 +1,4 @@
-// Backbone.PagedCollection.js 0.1.2
+// Backbone.PagedCollection.js 0.1.3
 
 // (c) 2012 Amir Grozki
 // Distributed under the MIT license.
@@ -54,6 +54,7 @@
           success = options.success;
       
       if (!this.pages[ this.page ]
+          || this.pages[ this.page ].collection.length <= 0
           || options.force // Allow a forced fetch for manual update.
           /*|| this.pages[ this.page ].timestamp < blabla // Something with the cache timestamp? */) {
             
@@ -94,22 +95,24 @@
     },
     
     reset: function(models, options) {
-      var timestamp = (new Date).getTime(), i, pageCount = Math.max(1, Math.ceil(this.total / this.perPage));
+      var timestamp = (new Date).getTime(), i, pageCount;
+      
+      this.total = options.total || models.length;
       
       options || (options = {});
-        
-      this.total = options.total || models.length;    
+      
+      pageCount = Math.max(1, Math.ceil(this.total / this.perPage))
 
       this._reset();
       
-      if (this.total) {// this should be in the constructor
+      if (this.total >= 0) {
         // Initialize the collection into pages if provided immediately.
         for(i = 1; i <= pageCount; ++i) {
           this.pages[i] = { timestamp: timestamp, collection: new this.collection(_.first(models, this.perPage), options) };
           
           this.pages[i].collection.url = this.url;
           
-          models = _(models).rest(this.perPage);
+          models = _.rest(models, this.perPage);
         }
       }
       
