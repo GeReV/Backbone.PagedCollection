@@ -1,4 +1,4 @@
-// Backbone.PagedCollection.js 0.1.3
+// Backbone.PagedCollection.js 0.1.4
 
 // (c) 2012 Amir Grozki
 // Distributed under the MIT license.
@@ -13,6 +13,7 @@
     this._reset = function() {
       _reset.call(this);
       
+      this.empty = true;
       this.pages = {};
     };
     
@@ -27,6 +28,10 @@
     this.perPage = options.perPage || 10;
     this.total = options.total;
     
+    this.cacheFunction = options.cacheFunction || function(timestamp) {
+      return false;
+    };
+    
     this.collection = options.collection || Backbone.Collection;
     
     this.url = this.collection.prototype.model.prototype.urlRoot;
@@ -35,7 +40,7 @@
     
     if (models) {
       this.reset(models, { silent: true, parse: options.parse, total: this.total });
-      this.total = options.total || models.length
+      this.total = options.total || models.length;
     }
   };
   
@@ -54,19 +59,21 @@
           success = options.success;
       
       if (!this.pages[ this.page ]
-          || this.pages[ this.page ].collection.length <= 0
+          || this.empty
           || options.force // Allow a forced fetch for manual update.
-          /*|| this.pages[ this.page ].timestamp < blabla // Something with the cache timestamp? */) {
+          || this.cacheFunction( this.pages[ this.page ].timestamp )) {
             
         this.trigger("fetching");
             
         collection = new this.collection();
         collection.url = this.url;
         collection.parse = this.parse;
-        this.pages[ this.page ] = { timestamp: (new Date).getTime(), collection: collection }; // added this line cause if u use any of eech etc methods pages[this.page] wont be defined yet
+        
         options.success = _.bind(function(resp) {
           
           this.pages[ this.page ] = { timestamp: (new Date).getTime(), collection: collection };
+          
+          this.empty = false;
           
           //Backbone.Collection.prototype.reset.call(this, this.pages[ this.page ].collection.toArray() );
           this.trigger("reset");
@@ -79,7 +86,6 @@
         
         options.parse = this.parse;
         options.url = this.url() + '/page/' + this.page;
-        //options.data = filters;
         
         if (this.dataFilter) {
           options.data = this.dataFilter;
@@ -114,6 +120,10 @@
           
           models = _.rest(models, this.perPage);
         }
+      }
+      
+      if (this.total > 0) {
+        this.empty = false;
       }
       
       if (pageCount < this.page) {
