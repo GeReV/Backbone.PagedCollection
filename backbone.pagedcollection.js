@@ -1,4 +1,4 @@
-// Backbone.PagedCollection.js 0.1.4
+// Backbone.PagedCollection.js 0.1.5
 
 // (c) 2012 Amir Grozki
 // Distributed under the MIT license.
@@ -9,6 +9,8 @@
 
   var PagedCollection = Backbone.PagedCollection = function(models, options) {  
     var _reset = this._reset;
+    
+    models = models || [];
     
     this._reset = function() {
       _reset.call(this);
@@ -26,7 +28,7 @@
     this._reset();
     
     this.perPage = options.perPage || 10;
-    this.total = options.total;
+    this.total = this.length = options.total || models.length;
     
     this.cacheFunction = options.cacheFunction || function(timestamp) {
       return false;
@@ -40,12 +42,11 @@
     
     if (models) {
       this.reset(models, { silent: true, parse: options.parse, total: this.total });
-      this.total = options.total || models.length;
     }
   };
   
   _.extend(PagedCollection.prototype, Backbone.Collection.prototype, {
-    initialize: function() {      
+    initialize: function() {
       _.bindAll(this, 'parse', 'pageInfo', 'nextPage', 'previousPage');
       
       this.page = 1;
@@ -69,11 +70,11 @@
         collection.url = this.url;
         collection.parse = this.parse;
         
+        this.pages[ this.page ] = { timestamp: (new Date).getTime(), collection: collection };
+        
         options.success = _.bind(function(resp) {
           
-          this.pages[ this.page ] = { timestamp: (new Date).getTime(), collection: collection };
-          
-          this.empty = false;
+          this.empty = (this.total > 0);
           
           //Backbone.Collection.prototype.reset.call(this, this.pages[ this.page ].collection.toArray() );
           this.trigger("reset");
@@ -93,7 +94,7 @@
         
         collection.fetch(options);
       }else{
-       //Backbone.Collection.prototype.reset.call(this, this.pages[ this.page ].collection.toArray() );
+       //Backbone.Collection.prototype.reset.call(this, this.pages[ this.page ].collection.toArray() );        
         this.trigger("reset");
         
         success && success(self);
@@ -103,11 +104,9 @@
     reset: function(models, options) {
       var timestamp = (new Date).getTime(), i, pageCount;
       
-      this.total = options.total || models.length;
-      
       options || (options = {});
       
-      pageCount = Math.max(1, Math.ceil(this.total / this.perPage))
+      pageCount = Math.max(1, Math.ceil(this.total / this.perPage));
 
       this._reset();
       
@@ -137,7 +136,7 @@
     parse: function(resp) {
       this.page = resp.page;
       this.perPage = resp.per_page;
-      this.total = resp.total;
+      this.total = this.length = resp.total;
       
       return resp.items;
     },
